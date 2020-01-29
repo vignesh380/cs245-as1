@@ -66,7 +66,7 @@ public class RowTable implements Table {
    */
   @Override
   public long columnSum() {
-    int sum = 0;
+    long sum = 0;
     for (int rowId = 0; rowId < numRows; rowId++) {
       sum += this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 0));
     }
@@ -82,12 +82,12 @@ public class RowTable implements Table {
    */
   @Override
   public long predicatedColumnSum(int threshold1, int threshold2) {
-    int sum = 0;
+    long sum = 0;
     for (int rowId = 0; rowId < numRows; rowId++) {
-      int col1Value = this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 1));
-      int col2Value = this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 2));
+      int col1Value = getIntField(rowId, 1);
+      int col2Value = getIntField(rowId, 2);
       if (col1Value > threshold1 && col2Value < threshold2) {
-        sum += this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 0));
+        sum += getIntField(rowId, 0);
       }
     }
     return sum;
@@ -101,13 +101,12 @@ public class RowTable implements Table {
    */
   @Override
   public long predicatedAllColumnsSum(int threshold) {
-    int sum = 0;
+    long sum = 0;
     for (int rowId = 0; rowId < numRows; rowId++) {
-      int col0Value = this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 0));
+      int col0Value = getIntField(rowId, 0);
       if (col0Value > threshold) {
         for (int colId = 0; colId < numCols; colId++) {
-          int offset = ByteFormat.FIELD_LEN * ((rowId * numCols) + colId);
-          sum += this.rows.getInt(offset);
+          sum += getIntField(rowId, colId);
         }
       }
     }
@@ -124,10 +123,10 @@ public class RowTable implements Table {
   public int predicatedUpdate(int threshold) {
     int count = 0;
     for (int rowId = 0; rowId < numRows; rowId++) {
-      int col0Value = this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 0));
+      int col0Value = getIntField(rowId, 0);
       if (col0Value < threshold) {
-        int col2Value = this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 2));
-        int col3Value = this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 3));
+        int col2Value = getIntField(rowId, 2);
+        int col3Value = getIntField(rowId, 3);
         putIntField(rowId, 3, col2Value + col3Value);
         count++;
       }

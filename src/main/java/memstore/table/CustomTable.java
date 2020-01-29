@@ -1,5 +1,8 @@
 package memstore.table;
 
+import java.nio.ByteBuffer;
+import java.util.List;
+import memstore.data.ByteFormat;
 import memstore.data.DataLoader;
 
 import java.io.IOException;
@@ -10,6 +13,9 @@ import java.io.IOException;
 public class CustomTable implements Table {
 
     public CustomTable() { }
+    protected int numCols;
+    protected int numRows;
+    protected ByteBuffer rows;
 
     /**
      * Loads data into the table through passed-in data loader. Is not timed.
@@ -19,7 +25,18 @@ public class CustomTable implements Table {
      */
     @Override
     public void load(DataLoader loader) throws IOException {
-        // TODO: Implement this!
+        this.numCols = loader.getNumCols();
+        List<ByteBuffer> rows = loader.getRows();
+        this.numRows = rows.size();
+        this.rows = ByteBuffer.allocate(ByteFormat.FIELD_LEN * numRows * numCols);
+
+        for (int rowId = 0; rowId < numRows; rowId++) {
+            ByteBuffer curRow = rows.get(rowId);
+            for (int colId = 0; colId < numCols; colId++) {
+                int offset = ByteFormat.FIELD_LEN * ((rowId * numCols) + colId);
+                this.rows.putInt(offset, curRow.getInt(ByteFormat.FIELD_LEN * colId));
+            }
+        }
     }
 
     /**
@@ -27,8 +44,7 @@ public class CustomTable implements Table {
      */
     @Override
     public int getIntField(int rowId, int colId) {
-        // TODO: Implement this!
-        return 0;
+        return this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + colId));
     }
 
     /**
@@ -36,7 +52,7 @@ public class CustomTable implements Table {
      */
     @Override
     public void putIntField(int rowId, int colId, int field) {
-        // TODO: Implement this!
+        this.rows.putInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + colId), field);
     }
 
     /**
@@ -47,8 +63,11 @@ public class CustomTable implements Table {
      */
     @Override
     public long columnSum() {
-        // TODO: Implement this!
-        return 0;
+        int sum = 0;
+        for (int rowId = 0; rowId < numRows; rowId++) {
+            sum += this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 0));
+        }
+        return sum;
     }
 
     /**
@@ -60,8 +79,15 @@ public class CustomTable implements Table {
      */
     @Override
     public long predicatedColumnSum(int threshold1, int threshold2) {
-        // TODO: Implement this!
-        return 0;
+        int sum = 0;
+        for (int rowId = 0; rowId < numRows; rowId++) {
+            int col1Value = this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 1));
+            int col2Value = this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 2));
+            if (col1Value > threshold1 && col2Value < threshold2) {
+                sum += this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 0));
+            }
+        }
+        return sum;
     }
 
     /**
@@ -72,8 +98,17 @@ public class CustomTable implements Table {
      */
     @Override
     public long predicatedAllColumnsSum(int threshold) {
-        // TODO: Implement this!
-        return 0;
+        int sum = 0;
+        for (int rowId = 0; rowId < numRows; rowId++) {
+            int col0Value = this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 0));
+            if (col0Value > threshold) {
+                for (int colId = 0; colId < numCols; colId++) {
+                    int offset = ByteFormat.FIELD_LEN * ((rowId * numCols) + colId);
+                    sum += this.rows.getInt(offset);
+                }
+            }
+        }
+        return sum;
     }
 
     /**
@@ -84,8 +119,17 @@ public class CustomTable implements Table {
      */
     @Override
     public int predicatedUpdate(int threshold) {
-        // TODO: Implement this!
-        return 0;
+        int count = 0;
+        for (int rowId = 0; rowId < numRows; rowId++) {
+            int col0Value = this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 0));
+            if (col0Value < threshold) {
+                int col2Value = this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 2));
+                int col3Value = this.rows.getInt(ByteFormat.FIELD_LEN * ((rowId * numCols) + 3));
+                putIntField(rowId, 3, col2Value + col3Value);
+                count++;
+            }
+        }
+        return count;
     }
 
 }

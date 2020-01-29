@@ -2,6 +2,7 @@ package memstore.table;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import memstore.data.ByteFormat;
 import memstore.data.DataLoader;
@@ -67,9 +68,9 @@ public class ColumnTable implements Table {
    */
   @Override
   public long columnSum() {
-    int sum = 0;
+    long sum = 0;
     for (int rowId = 0; rowId < numRows; rowId++) {
-      sum += this.columns.getInt(ByteFormat.FIELD_LEN * rowId);
+      sum += getIntField(rowId, 0);
     }
     return sum;
   }
@@ -83,10 +84,10 @@ public class ColumnTable implements Table {
    */
   @Override
   public long predicatedColumnSum(int threshold1, int threshold2) {
-    int sum = 0;
+    long sum = 0;
     for (int rowId = 0; rowId < numRows; rowId++) {
-      int col1Value = this.columns.getInt(ByteFormat.FIELD_LEN * ((1 * numRows) + rowId));
-      int col2Value = this.columns.getInt(ByteFormat.FIELD_LEN * ((2 * numRows) + rowId));
+      int col1Value = getIntField(rowId, 1);
+      int col2Value = getIntField(rowId, 2);
       if (col1Value > threshold1 && col2Value < threshold2) {
         sum += getIntField(rowId, 0);
       }
@@ -102,28 +103,28 @@ public class ColumnTable implements Table {
    */
   @Override
   public long predicatedAllColumnsSum(int threshold) {
-    int sum = 0;
-//    List<Integer> listOfRows = new ArrayList<>();
-//    for (int rowId = 0; rowId < numRows; rowId++) {
-//      int col0Value = this.columns.getInt(ByteFormat.FIELD_LEN * rowId);
-//      if (col0Value > threshold) {
-//        listOfRows.add(rowId);
-//      }
-//    }
-//    for (int colId = 0; colId < numCols; colId++) {
-//      for (Integer rowId : listOfRows) {
-//        sum += this.columns.getInt(ByteFormat.FIELD_LEN * ((colId * numRows) + rowId));
-//      }
-//    }
-
-    for (int colId = 0; colId < numCols; colId++) {
-      for (int rowId = 0; rowId < numRows; rowId++) {
-        int col0Value = this.columns.getInt(ByteFormat.FIELD_LEN * rowId);
-        if (col0Value > threshold) {
-          sum += this.columns.getInt(ByteFormat.FIELD_LEN * ((colId * numRows) + rowId));
-        }
+    long sum = 0;
+    List<Integer> listOfRows = new ArrayList<>();
+    for (int rowId = 0; rowId < numRows; rowId++) {
+      int col0Value = this.columns.getInt(ByteFormat.FIELD_LEN * rowId);
+      if (col0Value > threshold) {
+        listOfRows.add(rowId);
       }
     }
+    for (int colId = 0; colId < numCols; colId++) {
+      for (Integer rowId : listOfRows) {
+        sum += this.columns.getInt(ByteFormat.FIELD_LEN * ((colId * numRows) + rowId));
+      }
+    }
+
+//    for (int colId = 0; colId < numCols; colId++) {
+//      for (int rowId = 0; rowId < numRows; rowId++) {
+//        int col0Value = getIntField(rowId, 0);
+//        if (col0Value > threshold) {
+//          sum += getIntField(rowId, colId);
+//        }
+//      }
+//    }
     return sum;
   }
 
@@ -139,8 +140,8 @@ public class ColumnTable implements Table {
     for (int rowId = 0; rowId < numRows; rowId++) {
       int col0Value = this.columns.getInt(ByteFormat.FIELD_LEN * rowId);
       if (col0Value < threshold) {
-        int col2Value = this.columns.getInt(ByteFormat.FIELD_LEN * ((2 * numRows) + rowId));
-        int col3Value = this.columns.getInt(ByteFormat.FIELD_LEN * ((3 * numRows) + rowId));
+        int col2Value = getIntField(rowId, 2);
+        int col3Value = getIntField(rowId, 3);
         putIntField(rowId, 3, col2Value + col3Value);
         count++;
       }
