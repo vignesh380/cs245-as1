@@ -86,7 +86,7 @@ public class GraderRunner {
                     score,
                     maxScore
             );
-            gResult.output = String.format("Results: %d,%d,%d", rowResult, colResult, idxResult);
+            gResult.output = String.format("Results: %d,%d,%d , True result: %d", rowResult, colResult, idxResult,trueResult);
             System.out.println(testName+":correctness");
             System.out.println(gResult.output);
             results.add(gResult);
@@ -109,7 +109,7 @@ public class GraderRunner {
                     score,
                     maxScore
             );
-            gResult.output = String.format("Result: %d", testResult);
+            gResult.output = String.format("Result: %d , True result: %d", testResult,trueResult);
             System.out.println(testName+":correctness");
             System.out.println(gResult.output);
             results.add(gResult);

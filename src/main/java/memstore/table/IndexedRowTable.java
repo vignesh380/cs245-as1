@@ -188,26 +188,33 @@ public class IndexedRowTable implements Table {
   @Override
   public long predicatedAllColumnsSum(int threshold) {
     long[] sum = {0};
-    if (indexColumn == 0) {
-      SortedMap<Integer, IntArrayList> list = index.tailMap(threshold, false);
-      Iterator<Map.Entry<Integer, IntArrayList>> iterator = list.entrySet().iterator();
-      iterator.forEachRemaining(entry -> {
-        entry.getValue().stream().forEach(rowId -> {
-          for (int colId = 0; colId < numCols; colId++) {
-            sum[0] += getIntField(rowId, colId);
-          }
-        });
-      });
-    } else {
-      for (int rowId = 0; rowId < numRows; rowId++) {
-        int col0Value = getIntField(rowId, 0);
-        if (col0Value > threshold) {
-          for (int colId = 0; colId < numCols; colId++) {
-            sum[0] += getIntField(rowId, colId);
-          }
+//    if (indexColumn == 0) {
+//      SortedMap<Integer, IntArrayList> list = index.tailMap(threshold, false);
+//      list.entrySet().forEach(entry -> {
+//        entry.getValue().stream().forEach(rowId -> {
+//          for (int colId = 0; colId < numCols; colId++) {
+//            sum[0] += getIntField(rowId, colId);
+//          }
+//        });
+//      });
+////      Iterator<Map.Entry<Integer, IntArrayList>> iterator = list.entrySet().iterator();
+////      iterator.forEachRemaining(entry -> {
+////        entry.getValue().stream().forEach(rowId -> {
+////          for (int colId = 0; colId < numCols; colId++) {
+////            sum[0] += getIntField(rowId, colId);
+////          }
+////        });
+////      });
+//    } else {
+    for (int rowId = 0; rowId < numRows; rowId++) {
+      int col0Value = getIntField(rowId, 0);
+      if (col0Value > threshold) {
+        for (int colId = 0; colId < numCols; colId++) {
+          sum[0] += getIntField(rowId, colId);
         }
       }
     }
+    //}
     return sum[0];
   }
 
